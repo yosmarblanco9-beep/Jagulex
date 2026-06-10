@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAGULEX Oracle — The Beast Speaks</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold: #F5B800;
+  --orange: #E8700A;
+  --dark: #06060D;
+  --card: #0C0C18;
+  --surface: #111120;
+  --border: rgba(245,184,0,0.12);
+  --border-bright: rgba(245,184,0,0.35);
+  --text: rgba(255,255,255,0.72);
+  --muted: rgba(255,255,255,0.28);
+  --green: #14F195;
+}
+
+html, body {
+  height: 100%;
+  background: var(--dark);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+/* ── LAYOUT ── */
+.app {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+  z-index: 10;
+}
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-beast {
+  width: 32px; height: 32px;
+}
+
+.topbar-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.topbar-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-dot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.live-dot::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: blink 1.5s ease infinite;
+}
+@keyframes blink {
+  0%,100% { opacity:1; } 50% { opacity:.3; }
+}
+
+.solana-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(153,69,255,0.2), rgba(20,241,149,0.15));
+  border: 1px solid rgba(153,69,255,0.3);
+  color: rgba(153,69,255,0.9);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* Mode selector */
+.mode-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+}
+.mode-btn:hover { background: rgba(255,255,255,0.04); color: #fff; }
+.mode-btn.active {
+  background: rgba(245,184,0,0.08);
+  border-color: rgba(245,184,0,0.25);
+  color: var(--gold);
+}
+.mode-icon { font-size: 16px; }
+
+/* Matches list */
+.matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+  padding: 16px;
+}
+
+.match-card {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.match-card:hover { border-color: var(--border-bright); }
+.match-card.selected { border-color: var(--gold); background: rgba(245,184,0,0.05); }
+
+.match-teams {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+.match-meta {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Token info */
+.token-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.token-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.token-key { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.token-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--gold); font-weight: 600; }
+
+.pump-btn {
+  display: block;
+  width: 100%;
+  padding: 9px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #06060D;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  margin-top: 4px;
+  transition: opacity .2s;
+}
+.pump-btn:hover { opacity: .85; }
+
+/* ── MAIN CHAT ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Beast header */
+.beast-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(90deg, rgba(245,184,0,0.04) 0%, transparent 60%);
+}
+
+.beast-avatar {
+  width: 52px; height: 52px;
+  flex-shrink: 0;
+}
+
+.beast-info {}
+.beast-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  line-height: 1;
+}
+.beast-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.mode-indicator {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--border-bright);
+  color: var(--gold);
+  background: rgba(245,184,0,0.07);
+}
+
+/* Messages */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* Message bubbles */
+.msg {
+  display: flex;
+  gap: 12px;
+  max-width: 760px;
+  animation: fadeUp .3s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg.user { flex-direction: row-reverse; margin-left: auto; }
+
+.msg-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.msg-avatar.beast-av {
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #06060D;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 1px;
+  font-size: 13px;
+}
+
+.msg-avatar.user-av {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--muted);
+}
+
+.msg-bubble {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text);
+  max-width: 100%;
+}
+
+.msg.beast .msg-bubble {
+  border-color: rgba(245,184,0,0.15);
+  background: rgba(245,184,0,0.04);
+}
+
+.msg.user .msg-bubble {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.msg-bubble strong { color: var(--gold); }
+.msg-bubble em { color: rgba(255,255,255,0.5); font-style: normal; font-size: 11px; }
+
+/* Prediction card inside bubble */
+.pred-card {
+  background: var(--card);
+  border: 1px solid var(--border-bright);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 10px;
+}
+.pred-matchup {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.pred-vs { color: var(--gold); margin: 0 8px; }
+.pred-bars {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.pred-bar-wrap { flex: 1; }
+.pred-bar-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.pred-bar-track { height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+.pred-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.pred-verdict {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Typing indicator */
+.typing {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+  background: rgba(245,184,0,0.04);
+  border: 1px solid rgba(245,184,0,0.15);
+  border-radius: 12px;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  opacity: .4;
+  animation: tdot .9s ease infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: .15s; }
+.typing-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes tdot {
+  0%,100% { opacity:.4; transform: scale(1); }
+  50% { opacity:1; transform: scale(1.3); }
+}
+
+/* Quick prompts */
+.quick-prompts {
+  padding: 12px 24px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.quick-prompts::-webkit-scrollbar { display: none; }
+.qp {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.qp:hover { border-color: var(--gold); color: var(--gold); background: rgba(245,184,0,0.06); }
+
+/* Input area */
+.input-area {
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.input-box {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 11px 16px;
+  color: #fff;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  max-height: 120px;
+  transition: border-color .2s;
+}
+.input-box:focus { border-color: rgba(245,184,0,0.4); }
+.input-box::placeholder { color: rgba(255,255,255,0.2); }
+
+.send-btn {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: opacity .2s, transform .15s;
+}
+.send-btn:hover { opacity: .85; transform: scale(1.05); }
+.send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+  .sidebar { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <!-- mini beast SVG -->
+      <svg class="topbar-beast" viewBox="60 60 180 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="hbG" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#f5c842"/><stop offset="100%" stop-color="#b35c00"/></radialGradient>
+          <radialGradient id="hwG" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="#7ab8f5"/><stop offset="100%" stop-color="#1a3f6e"/></radialGradient>
+          <radialGradient id="haG" cx="50%" cy="20%" r="70%"><stop offset="0%" stop-color="#c8a96a"/><stop offset="100%" stop-color="#7a5c2a"/></radialGradient>
+        </defs>
+        <path d="M108 88 C100 72,88 60,78 48" stroke="url(#haG)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M192 88 C200 72,212 60,222 48" stroke="url(#haG)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M105 155 C80 145,50 140,30 152 C22 158,22 168,30 174 C50 180,80 168,105 168" fill="url(#hwG)" opacity=".9"/>
+        <path d="M195 155 C220 145,250 140,270 152 C278 158,278 168,270 174 C250 180,220 168,195 168" fill="url(#hwG)" opacity=".9"/>
+        <ellipse cx="150" cy="116" rx="46" ry="40" fill="url(#hbG)"/>
+        <ellipse cx="116" cy="124" rx="16" ry="12" fill="#e8961a" opacity=".7"/>
+        <ellipse cx="184" cy="124" rx="16" ry="12" fill="#e8961a" opacity=".7"/>
+        <path d="M116 90 C110 72,104 64,110 56 C118 58,128 72,126 88Z" fill="#e8961a"/>
+        <path d="M184 90 C190 72,196 64,190 56 C182 58,172 72,174 88Z" fill="#e8961a"/>
+        <path d="M142 136 C145 144,150 148,155 144 C158 140,158 136,150 132Z" fill="#f5d020"/>
+        <ellipse cx="130" cy="114" rx="12" ry="10" fill="white"/>
+        <ellipse cx="170" cy="114" rx="12" ry="10" fill="white"/>
+        <ellipse cx="130" cy="114" rx="8" ry="8" fill="#d4830a"/>
+        <ellipse cx="170" cy="114" rx="8" ry="8" fill="#d4830a"/>
+        <ellipse cx="130" cy="114" rx="3" ry="6" fill="#1a0800"/>
+        <ellipse cx="170" cy="114" rx="3" ry="6" fill="#1a0800"/>
+        <ellipse cx="133" cy="111" rx="2" ry="1.5" fill="white"/>
+        <ellipse cx="173" cy="111" rx="2" ry="1.5" fill="white"/>
+        <path d="M143 132 C147 128,153 128,157 132 C155 136,150 137,145 136Z" fill="#2a1200"/>
+      </svg>
+      <span class="topbar-name">JAGULEX ORACLE</span>
+      <span class="topbar-tag">AI · World Cup 2026</span>
+    </div>
+    <div class="topbar-right">
+      <span class="live-dot">Live</span>
+      <span class="solana-badge">◎ Solana</span>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Mode selector -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Mode</div>
+      <div class="mode-btns">
+        <button class="mode-btn active" onclick="setMode('chat')" id="btn-chat">
+          <span class="mode-icon">🐆</span> Ask the Beast
+        </button>
+        <button class="mode-btn" onclick="setMode('predict')" id="btn-predict">
+          <span class="mode-icon">⚽</span> Match Predictor
+        </button>
+      </div>
+    </div>
+
+    <!-- Match list (shown in predict mode) -->
+    <div class="sidebar-section" id="matches-section" style="display:none">
+      <div class="sidebar-label">Upcoming Matches</div>
+    </div>
+    <div class="matches-list" id="matches-list" style="display:none">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Token info -->
+    <div class="sidebar-section" style="margin-top:auto">
+      <div class="sidebar-label">$JGLX Token</div>
+      <div class="token-info">
+        <div class="token-row">
+          <span class="token-key">Network</span>
+          <span class="token-val">Solana</span>
+        </div>
+        <div class="token-row">
+          <span class="token-key">Tax</span>
+          <span class="token-val">0% / 0%</span>
+        </div>
+        <div class="token-row">
+          <span class="token-key">Supply</span>
+          <span class="token-val">1,000,000,000</span>
+        </div>
+        <div class="token-row">
+          <span class="token-key">CA</span>
+          <span class="token-val" style="font-size:9px">As6y…pump</span>
+        </div>
+      </div>
+      <a href="https://pump.fun/coin/As6yndgB8P9n8GJtaEZqi1Xx9Xi8Zapg7LqHJ7GVpump" target="_blank" class="pump-btn">🚀 Buy $JGLX</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT -->
+  <main class="main">
+    <div class="beast-header">
+      <svg class="beast-avatar" viewBox="60 60 180 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="abG" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#f5c842"/><stop offset="100%" stop-color="#b35c00"/></radialGradient>
+          <radialGradient id="awG" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="#7ab8f5"/><stop offset="100%" stop-color="#1a3f6e"/></radialGradient>
+          <radialGradient id="aaG" cx="50%" cy="20%" r="70%"><stop offset="0%" stop-color="#c8a96a"/><stop offset="100%" stop-color="#7a5c2a"/></radialGradient>
+        </defs>
+        <path d="M108 88 C100 72,88 60,78 48" stroke="url(#aaG)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M96 72 C86 66,76 66,68 62" stroke="url(#aaG)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M192 88 C200 72,212 60,222 48" stroke="url(#aaG)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M204 72 C214 66,224 66,232 62" stroke="url(#aaG)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M105 155 C80 145,50 140,30 152 C22 158,22 168,30 174 C50 180,80 168,105 168" fill="url(#awG)" opacity=".9"/>
+        <path d="M195 155 C220 145,250 140,270 152 C278 158,278 168,270 174 C250 180,220 168,195 168" fill="url(#awG)" opacity=".9"/>
+        <ellipse cx="150" cy="188" rx="48" ry="55" fill="url(#abG)"/>
+        <ellipse cx="150" cy="198" rx="26" ry="38" fill="rgba(255,235,160,.5)"/>
+        <ellipse cx="150" cy="116" rx="46" ry="40" fill="url(#abG)"/>
+        <ellipse cx="116" cy="124" rx="16" ry="12" fill="#e8961a" opacity=".7"/>
+        <ellipse cx="184" cy="124" rx="16" ry="12" fill="#e8961a" opacity=".7"/>
+        <path d="M116 90 C110 72,104 64,110 56 C118 58,128 72,126 88Z" fill="#e8961a"/>
+        <path d="M184 90 C190 72,196 64,190 56 C182 58,172 72,174 88Z" fill="#e8961a"/>
+        <path d="M142 136 C145 144,150 148,155 144 C158 140,158 136,150 132Z" fill="#f5d020"/>
+        <ellipse cx="130" cy="114" rx="12" ry="10" fill="white"/>
+        <ellipse cx="170" cy="114" rx="12" ry="10" fill="white"/>
+        <ellipse cx="130" cy="114" rx="8" ry="8" fill="#d4830a"/>
+        <ellipse cx="170" cy="114" rx="8" ry="8" fill="#d4830a"/>
+        <ellipse cx="130" cy="114" rx="3" ry="6" fill="#1a0800"/>
+        <ellipse cx="170" cy="114" rx="3" ry="6" fill="#1a0800"/>
+        <ellipse cx="133" cy="111" rx="2" ry="1.5" fill="white"/>
+        <ellipse cx="173" cy="111" rx="2" ry="1.5" fill="white"/>
+        <path d="M143 132 C147 128,153 128,157 132 C155 136,150 137,145 136Z" fill="#2a1200"/>
+      </svg>
+      <div class="beast-info">
+        <div class="beast-title">JAGULEX — THE ORACLE</div>
+        <div class="beast-subtitle">Jaguar 🐆 · Eagle 🦅 · Moose 🦌 · World Cup 2026 · $JGLX on Solana</div>
+      </div>
+      <div class="mode-indicator" id="mode-label">🐆 ASK THE BEAST</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <!-- Welcome message -->
+      <div class="msg beast">
+        <div class="msg-avatar beast-av">JX</div>
+        <div class="msg-bubble">
+          🔥 <strong>JAGULEX has awakened.</strong><br><br>
+          I am the fusion of three nations — Mexico, USA, Canada — born from the greatest tournament on Earth. The <strong>2026 World Cup</strong> starts tomorrow and I see all.<br><br>
+          Ask me anything about the matches, the teams, or $JGLX. Or switch to <strong>Match Predictor</strong> mode and I'll tell you who wins. 🏆<br><br>
+          <em>Three nations. One beast. One token. 🐆🦅🦌</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick prompts -->
+    <div class="quick-prompts" id="quick-prompts">
+      <button class="qp" onclick="sendQuick(this)">Who will win the World Cup?</button>
+      <button class="qp" onclick="sendQuick(this)">Tell me about $JGLX</button>
+      <button class="qp" onclick="sendQuick(this)">Predict Mexico's group stage</button>
+      <button class="qp" onclick="sendQuick(this)">Best dark horse team?</button>
+      <button class="qp" onclick="sendQuick(this)">Why buy $JGLX?</button>
+      <button class="qp" onclick="sendQuick(this)">USA vs England prediction</button>
+    </div>
+
+    <!--
